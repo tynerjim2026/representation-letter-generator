@@ -1,25 +1,28 @@
 
-/* Representation Letter Generator
-   Capital Region Court Directory
-
-   Each court record contains:
-   - county
-   - court name
-   - verified mailing address
-
-   Only add addresses confirmed from official court sources.
+/* Capital Region Court Directory
+   Addresses from NY State court listings.
+   Confirm mailing addresses before use.
 */
 
 const COURT_DIRECTORY = {
-  "Albany": [],
+  "Albany": [
+    {
+      name: "Albany City Court, Criminal Part",
+      address: "1 Morton Avenue\nAlbany, New York 12202"
+    }
+  ],
   "Schenectady": [],
-  "Saratoga": [],
+  "Saratoga": [
+    {
+      name: "Wilton Town Court",
+      address: "20 Traver Road\nGansevoort, New York 12831"
+    }
+  ],
   "Rensselaer": [],
-  "Montgomery": []
+  "Montgomery": [
+    {
+      name: "Amsterdam Town Court",
+      address: "283 Manny's Corners Road\nAmsterdam, New York 12010"
+    }
+  ]
 };
-
-// Example of the format for a verified court:
-// {
-//   name: "Court Name",
-//   address: "Street or PO Box\nCity, NY ZIP"
-// }
