@@ -1,1 +1,130 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Representation Letter Generator</title><script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script><style>body{font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:18px;color:#202833}h2{font-size:19px}label{display:block;margin:14px 0 5px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:9px;border:1px solid #b8c1cd;border-radius:5px;font:inherit}textarea{height:70px}button{margin:14px 6px 0 0;padding:10px 14px;border:0;border-radius:5px;background:#175cd3;color:white;cursor:pointer}button.secondary{background:#e6ebf2;color:#202833}#status{margin-top:12px;color:#5c6570}#preview{white-space:pre-wrap;background:#f6f7fa;border:1px solid #d7dce4;padding:12px;margin-top:12px;display:none}.note{font-size:12px;color:#616b76}</style></head><body><h2>Representation Letter Generator</h2><p class="note">Starter version. Court details must be verified and entered manually until the statewide directory is connected.</p><label for="date">Letter date</label><input id="date" type="date"><label for="court">Court name</label><input id="court" placeholder="Malta Town Court"><label for="address">Verified court mailing address (street, city, state ZIP)</label><textarea id="address" placeholder="2538 Route 9&#10;Malta, New York 12020"></textarea><label for="county">County (for District Attorney cc)</label><input id="county" placeholder="Saratoga"><label for="defendant">Defendant's full name</label><input id="defendant" placeholder="John Smith"><label for="filename">Desired filename</label><input id="filename" placeholder="Smith Representation Letter"><button class="secondary" id="previewButton">Preview Letter</button><button id="generateButton">Fill Word Letter</button><div id="preview"></div><div id="status" role="status"></div><script src="taskpane.js"></script></body></html>
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Representation Letter Generator</title>
+
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+  <style>
+    body {
+      font: 14px -apple-system, BlinkMacSystemFont,
+        'Segoe UI', sans-serif;
+      margin: 18px;
+      color: #202833;
+    }
+
+    h2 { font-size: 19px; }
+
+    label {
+      display: block;
+      margin: 14px 0 5px;
+      font-weight: 600;
+    }
+
+    input, textarea, select {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 9px;
+      border: 1px solid #b8c1cd;
+      border-radius: 5px;
+      font: inherit;
+      background: white;
+    }
+
+    textarea { height: 75px; }
+
+    button {
+      margin: 14px 6px 0 0;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 5px;
+      background: #175cd3;
+      color: white;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #e6ebf2;
+      color: #202833;
+    }
+
+    #status {
+      margin-top: 12px;
+      color: #5c6570;
+    }
+
+    #preview {
+      white-space: pre-wrap;
+      background: #f6f7fa;
+      border: 1px solid #d7dce4;
+      padding: 12px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #616b76;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Representation Letter Generator</h2>
+
+  <p class="note">
+    Select a county and court. Confirm the mailing address
+    before generating your letter.
+  </p>
+
+  <label for="date">Letter date</label>
+  <input id="date" type="date">
+
+  <label for="county">County</label>
+  <select id="county">
+    <option value="">Select a county</option>
+    <option value="Albany">Albany</option>
+    <option value="Schenectady">Schenectady</option>
+    <option value="Saratoga">Saratoga</option>
+    <option value="Rensselaer">Rensselaer</option>
+    <option value="Montgomery">Montgomery</option>
+  </select>
+
+  <label for="courtSelect">Court</label>
+  <select id="courtSelect">
+    <option value="">Select a county first</option>
+  </select>
+
+  <label for="court">Court name</label>
+  <input id="court"
+         placeholder="Court name (automatically filled)">
+
+  <label for="address">Court mailing address</label>
+  <textarea id="address"
+    placeholder="Street or P.O. Box&#10;City, New York ZIP"></textarea>
+
+  <p id="addressNote" class="note">
+    Court mailing address must be confirmed before use.
+  </p>
+
+  <label for="defendant">Defendant's full name</label>
+  <input id="defendant" placeholder="John Smith">
+
+  <button class="secondary" id="previewButton">
+    Preview Letter
+  </button>
+
+  <button id="generateButton">
+    Fill Word Letter
+  </button>
+
+  <div id="preview"></div>
+  <div id="status" role="status"></div>
+
+  <script src="courts.js"></script>
+  <script src="taskpane.js"></script>
+</body>
+</html>
