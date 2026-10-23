@@ -19,10 +19,14 @@ const COURT_DIRECTORY = {
     }
   ],
   "Rensselaer": [],
-  "Montgomery": [
-    {
-      name: "Amsterdam Town Court",
-      address: "283 Manny's Corners Road\nAmsterdam, New York 12010"
-    }
-  ]
-};
+ 
+"Montgomery": [
+  {
+    name: "Amsterdam Town Court",
+    address: "283 Manny's Corners Road\nAmsterdam, New York 12010"
+  },
+  {
+    name: "Canajoharie Town Court",
+    address: "209 Erie Boulevard\nCanajoharie, New York 13317"
+  }
+]
