@@ -26,6 +26,7 @@ function populateCourts() {
   placeholder.textContent = county
     ? 'Select a court'
     : 'Select a county first';
+
   select.appendChild(placeholder);
 
   if (county && typeof COURT_DIRECTORY !== 'undefined') {
@@ -50,37 +51,73 @@ function populateCourts() {
 
   $('court').value = '';
   $('address').value = '';
+
   $('addressNote').textContent =
     'Select a court, then confirm its mailing address.';
 }
+
+/* Automatically fill court name and address */
 
 function selectCourt() {
   const county = $('county').value;
   const selected = $('courtSelect').value;
 
+  const courtField = $('court');
+  const addressField = $('address');
+  const note = $('addressNote');
+
+  courtField.value = '';
+  addressField.value = '';
+
   if (!selected || selected === '__manual__') {
-    $('court').value = '';
-    $('address').value = '';
-    $('addressNote').textContent =
+    note.textContent =
       'Enter the court name and verified mailing address manually.';
+    return;
+  }
+
+  if (typeof COURT_DIRECTORY === 'undefined') {
+    note.textContent =
+      'ERROR: courts.js has not loaded. Check the script reference.';
     return;
   }
 
   const courts = COURT_DIRECTORY[county] || [];
   const court = courts.find(item => item.name === selected);
 
-  if (!court) return;
+  if (!court) {
+    note.textContent =
+      'ERROR: Selected court was not found in the directory.';
+    return;
+  }
 
-  $('court').value = court.name;
-  $('address').value = court.address || '';
+  courtField.value = court.name;
+
+  const address = String(court.address || '').trim();
+
+  if (!address) {
+    note.textContent =
+      'No address is stored for this court. Enter its verified mailing address manually.';
+    return;
+  }
+
+  addressField.value = address;
 
   if (court.addressStatus === 'mailing-listed') {
-    $('addressNote').textContent =
-      'Official directory lists a mailing address. Confirm before use.';
+    note.textContent =
+      'Listed mailing address loaded. Confirm before sending.';
+  } else if (
+    court.addressStatus ===
+    'conflicting-address-confirm-before-use'
+  ) {
+    note.textContent =
+      'WARNING: Conflicting court addresses. Verify before sending.';
   } else {
-    $('addressNote').textContent =
-      'WARNING: This is an official court location, not a verified mailing address. Confirm or correct it before use.';
+    note.textContent =
+      'Listed court address loaded. Mailing address has NOT been verified. Confirm before sending.';
   }
+
+  console.log('Selected court:', court.name);
+  console.log('Loaded address:', address);
 }
 
 /* Letter data */
@@ -128,7 +165,9 @@ cc: ${titleCase(d.county)} County District Attorney’s Office
 function getData() {
   const d = data();
   const err = validate(d);
+
   $('status').textContent = err;
+
   return err ? null : d;
 }
 
@@ -179,11 +218,14 @@ async function replaceAll(context, marker, value, required = true) {
   return count;
 }
 
+/* Fill the Word letter */
+
 async function fillLetter() {
   const d = getData();
   if (!d) return;
 
   $('status').textContent = 'Filling Word letter…';
+
   let field = 'starting';
 
   try {
