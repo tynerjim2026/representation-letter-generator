@@ -3,7 +3,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
   <title>Representation Letter Generator</title>
 
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
@@ -11,12 +13,21 @@
   <style>
     body {
       font: 14px -apple-system, BlinkMacSystemFont,
-        'Segoe UI', sans-serif;
+        "Segoe UI", sans-serif;
       margin: 18px;
       color: #202833;
     }
 
-    h2 { font-size: 19px; }
+    h2 {
+      font-size: 19px;
+      margin-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 15px;
+      margin-top: 22px;
+      margin-bottom: 8px;
+    }
 
     label {
       display: block;
@@ -34,10 +45,13 @@
       background: white;
     }
 
-    textarea { height: 75px; }
+    textarea {
+      min-height: 75px;
+      resize: vertical;
+    }
 
     button {
-      margin: 14px 6px 0 0;
+      margin: 12px 6px 0 0;
       padding: 10px 14px;
       border: 0;
       border-radius: 5px;
@@ -51,9 +65,65 @@
       color: #202833;
     }
 
+    button.removeTicket {
+      background: #b42318;
+      padding: 8px 10px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #616b76;
+      line-height: 1.5;
+    }
+
+    .ticketRow {
+      margin-bottom: 8px;
+    }
+
+    .ticketRow input {
+      width: calc(100% - 90px);
+    }
+
+    .ticketRow button {
+      margin: 0 0 0 6px;
+    }
+
+    #courtMatches {
+      border: 1px solid #d7dce4;
+      border-radius: 5px;
+      margin-top: 5px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    #courtMatches button {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 10px;
+      text-align: left;
+      border-radius: 0;
+      border-bottom: 1px solid #e6ebf2;
+      background: white;
+      color: #202833;
+    }
+
+    #courtMatches button:hover {
+      background: #eef4ff;
+    }
+
+    #trafficFields {
+      display: none;
+      border-top: 1px solid #d7dce4;
+      margin-top: 18px;
+      padding-top: 4px;
+    }
+
     #status {
       margin-top: 12px;
       color: #5c6570;
+      white-space: pre-wrap;
     }
 
     #preview {
@@ -64,67 +134,124 @@
       margin-top: 12px;
       display: none;
     }
-
-    .note {
-      font-size: 12px;
-      color: #616b76;
-    }
   </style>
 </head>
 
 <body>
+
   <h2>Representation Letter Generator</h2>
 
   <p class="note">
-    Select a county and court. Confirm the mailing address
-    before generating your letter.
+    Search for a court, confirm its mailing address,
+    and choose the letter you want to generate.
   </p>
+
+  <label for="letterType">Letter type</label>
+  <select id="letterType">
+    <option value="representation">
+      Representation Letter
+    </option>
+    <option value="traffic">
+      Traffic Representation Letter
+    </option>
+  </select>
 
   <label for="date">Letter date</label>
   <input id="date" type="date">
 
-  <label for="county">County</label>
-  <select id="county">
-    <option value="">Select a county</option>
-    <option value="Albany">Albany</option>
-    <option value="Schenectady">Schenectady</option>
-    <option value="Saratoga">Saratoga</option>
-    <option value="Rensselaer">Rensselaer</option>
-    <option value="Montgomery">Montgomery</option>
-  </select>
+  <h3>Court Information</h3>
 
-  <label for="courtSelect">Court</label>
-  <select id="courtSelect">
-    <option value="">Select a county first</option>
-  </select>
+  <label for="courtSearch">Search for court</label>
+  <input
+    id="courtSearch"
+    type="text"
+    autocomplete="off"
+    placeholder="Start typing a court name">
 
-  <label for="court">Court name</label>
-  <input id="court"
-         placeholder="Court name (automatically filled)">
+  <div id="courtMatches"></div>
 
-  <label for="address">Court mailing address</label>
-  <textarea id="address"
-    placeholder="Street or P.O. Box&#10;City, New York ZIP"></textarea>
-
-  <p id="addressNote" class="note">
-    Court mailing address must be confirmed before use.
+  <p class="note">
+    Select a matching court to fill in its county
+    and listed address automatically.
   </p>
 
-  <label for="defendant">Defendant's full name</label>
-  <input id="defendant" placeholder="John Smith">
+  <label for="court">Court name</label>
+  <input
+    id="court"
+    placeholder="Court name"
+  >
 
-  <button class="secondary" id="previewButton">
+  <label for="county">County</label>
+  <input
+    id="county"
+    placeholder="Automatically filled or enter manually"
+  >
+
+  <label for="address">Court mailing address</label>
+  <textarea
+    id="address"
+    placeholder="Street or P.O. Box&#10;City, New York ZIP"
+  ></textarea>
+
+  <p id="addressNote" class="note">
+    Select a court and confirm its mailing address.
+  </p>
+
+  <h3>Defendant Information</h3>
+
+  <label for="defendant">Defendant's full name</label>
+  <input
+    id="defendant"
+    placeholder="John Smith"
+  >
+
+  <div id="trafficFields">
+
+    <h3>Uniform Traffic Tickets</h3>
+
+    <p class="note">
+      Enter one or more UTT numbers.
+      They will appear on one line in the letter.
+    </p>
+
+    <div id="ticketList"></div>
+
+    <button
+      type="button"
+      class="secondary"
+      id="addTicketButton">
+      + Add Another Ticket
+    </button>
+
+  </div>
+
+  <h3>Generate Letter</h3>
+
+  <p id="templateNote" class="note">
+    Open a fresh copy of your Representation Letter
+    template in Word before filling it.
+  </p>
+
+  <button
+    type="button"
+    class="secondary"
+    id="previewButton">
     Preview Letter
   </button>
 
-  <button id="generateButton">
+  <button
+    type="button"
+    id="generateButton">
     Fill Word Letter
   </button>
 
   <div id="preview"></div>
+
   <div id="status" role="status"></div>
 
-<script src="courts.js?v=7"></script>
-<script src="taskpane.js?v=7"></script>
+  <!-- Load court directory before questionnaire logic -->
+  <script src="courts.js?v=9"></script>
+  <script src="taskpane.js?v=9"></script>
+
 </body>
 </html>
