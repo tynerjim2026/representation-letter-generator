@@ -1,10 +1,20 @@
 
-/* Representation Letter Generator — Word for Mac */
+/* Representation Letter Generator — Word for Mac
+   Supports:
+   - Original Representation Letter
+   - Traffic Representation Letter
+   - Searchable court directory
+   - Automatic county and address
+   - Multiple UTT numbers
+*/
 
 const $ = id => document.getElementById(id);
 
 const titleCase = s =>
-  s.trim().toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
+  String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\b[a-z]/g, c => c.toUpperCase());
 
 const dateText = value =>
   new Date(value + 'T12:00:00').toLocaleDateString('en-US', {
@@ -13,132 +23,214 @@ const dateText = value =>
     day: 'numeric'
   });
 
-/* County and court selection */
+/* Court directory search */
 
-function populateCourts() {
-  const county = $('county').value;
-  const select = $('courtSelect');
+function allCourts() {
+  if (typeof COURT_DIRECTORY === 'undefined') {
+    return [];
+  }
 
-  select.replaceChildren();
+  return Object.keys(COURT_DIRECTORY).flatMap(county =>
+    (COURT_DIRECTORY[county] || []).map(court => ({
+      ...court,
+      county: court.county || county
+    }))
+  );
+}
 
-  const placeholder = document.createElement('option');
-  placeholder.value = '';
-  placeholder.textContent = county
-    ? 'Select a court'
-    : 'Select a county first';
+function searchCourts() {
+  const query = $('courtSearch').value.trim().toLowerCase();
+  const matchesBox = $('courtMatches');
 
-  select.appendChild(placeholder);
+  matchesBox.replaceChildren();
+  matchesBox.style.display = 'none';
 
-  if (county && typeof COURT_DIRECTORY !== 'undefined') {
-    const courts = COURT_DIRECTORY[county] || [];
+  if (!query) return;
 
-    courts.slice().sort((a, b) =>
-      a.name.localeCompare(b.name)
-    ).forEach(court => {
-      const option = document.createElement('option');
-      option.value = court.name;
-      option.textContent = court.name;
-      select.appendChild(option);
+  const matches = allCourts()
+    .filter(court =>
+      court.name.toLowerCase().includes(query) ||
+      court.county.toLowerCase().includes(query)
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 30);
+
+  if (matches.length === 0) {
+    const message = document.createElement('p');
+    message.className = 'note';
+    message.style.padding = '10px';
+    message.textContent =
+      'No matching court found. Enter the court information manually.';
+    matchesBox.appendChild(message);
+  } else {
+    matches.forEach(court => {
+      const button = document.createElement('button');
+      button.type = 'button';
+
+      button.textContent =
+        `${court.name} — ${court.county} County`;
+
+      button.addEventListener('click', () => {
+        chooseCourt(court);
+      });
+
+      matchesBox.appendChild(button);
     });
   }
 
-  if (county) {
-    const manual = document.createElement('option');
-    manual.value = '__manual__';
-    manual.textContent = 'Other court — enter manually';
-    select.appendChild(manual);
-  }
-
-  $('court').value = '';
-  $('address').value = '';
-
-  $('addressNote').textContent =
-    'Select a court, then confirm its mailing address.';
+  matchesBox.style.display = 'block';
 }
 
-/* Automatically fill court name and address */
-
-function selectCourt() {
-  const county = $('county').value;
-  const selected = $('courtSelect').value;
-
-  const courtField = $('court');
-  const addressField = $('address');
-  const note = $('addressNote');
-
-  courtField.value = '';
-  addressField.value = '';
-
-  if (!selected || selected === '__manual__') {
-    note.textContent =
-      'Enter the court name and verified mailing address manually.';
-    return;
-  }
-
-  if (typeof COURT_DIRECTORY === 'undefined') {
-    note.textContent =
-      'ERROR: courts.js has not loaded. Check the script reference.';
-    return;
-  }
-
-  const courts = COURT_DIRECTORY[county] || [];
-  const court = courts.find(item => item.name === selected);
-
-  if (!court) {
-    note.textContent =
-      'ERROR: Selected court was not found in the directory.';
-    return;
-  }
-
-  courtField.value = court.name;
+function chooseCourt(court) {
+  $('courtSearch').value = court.name;
+  $('court').value = court.name;
+  $('county').value = court.county;
 
   const address = String(court.address || '').trim();
+  $('address').value = address;
+
+  $('courtMatches').style.display = 'none';
 
   if (!address) {
-    note.textContent =
-      'No address is stored for this court. Enter its verified mailing address manually.';
-    return;
-  }
-
-  addressField.value = address;
-
-  if (court.addressStatus === 'mailing-listed') {
-    note.textContent =
+    $('addressNote').textContent =
+      'No address is stored for this court. Enter a verified mailing address manually.';
+  } else if (
+    court.addressStatus === 'mailing-listed'
+  ) {
+    $('addressNote').textContent =
       'Listed mailing address loaded. Confirm before sending.';
   } else if (
     court.addressStatus ===
     'conflicting-address-confirm-before-use'
   ) {
-    note.textContent =
+    $('addressNote').textContent =
       'WARNING: Conflicting court addresses. Verify before sending.';
   } else {
-    note.textContent =
+    $('addressNote').textContent =
       'Listed court address loaded. Mailing address has NOT been verified. Confirm before sending.';
   }
+}
 
-  console.log('Selected court:', court.name);
-  console.log('Loaded address:', address);
+function clearCourtSelection() {
+  $('court').value = '';
+  $('county').value = '';
+  $('address').value = '';
+
+  $('addressNote').textContent =
+    'Select a court from the results, or enter the court information manually.';
+}
+
+/* Letter type */
+
+function updateLetterType() {
+  const isTraffic = $('letterType').value === 'traffic';
+
+  $('trafficFields').style.display =
+    isTraffic ? 'block' : 'none';
+
+  $('templateNote').textContent = isTraffic
+    ? 'Open a fresh copy of your Traffic Representation Letter template in Word before filling it.'
+    : 'Open a fresh copy of your Representation Letter template in Word before filling it.';
+
+  $('preview').style.display = 'none';
+  $('status').textContent = '';
+}
+
+/* Multiple UTT numbers */
+
+function addTicket(value = '') {
+  const row = document.createElement('div');
+  row.className = 'ticketRow';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'ticketInput';
+  input.placeholder = 'Enter UTT number';
+  input.value = value;
+
+  const removeButton = document.createElement('button');
+  removeButton.type = 'button';
+  removeButton.className = 'removeTicket';
+  removeButton.textContent = 'Remove';
+
+  removeButton.addEventListener('click', () => {
+    row.remove();
+
+    if ($('ticketList').children.length === 0) {
+      addTicket();
+    }
+  });
+
+  row.appendChild(input);
+  row.appendChild(removeButton);
+
+  $('ticketList').appendChild(row);
+}
+
+function getTickets() {
+  return Array.from(
+    document.querySelectorAll('.ticketInput')
+  )
+    .map(input => input.value.trim())
+    .filter(Boolean);
 }
 
 /* Letter data */
 
-const data = () => ({
-  date: $('date').value,
-  court: $('court').value.trim(),
-  address: $('address').value.trim(),
-  county: $('county').value.trim(),
-  defendant: titleCase($('defendant').value)
-});
-
-function validate(d) {
-  return !d.date ? 'Enter a date.' :
-    !d.county ? 'Select a county.' :
-    !d.court ? 'Select or enter a court name.' :
-    !d.address ? 'Enter the verified mailing address.' :
-    !d.defendant ? 'Enter the defendant.' : '';
+function data() {
+  return {
+    letterType: $('letterType').value,
+    date: $('date').value,
+    court: $('court').value.trim(),
+    address: $('address').value.trim(),
+    county: $('county').value.trim(),
+    defendant: titleCase($('defendant').value),
+    tickets: getTickets()
+  };
 }
 
-function preview(d) {
+function validate(d) {
+  if (!d.date) {
+    return 'Enter a letter date.';
+  }
+
+  if (!d.court) {
+    return 'Select or enter a court name.';
+  }
+
+  if (!d.county) {
+    return 'Select or enter a county.';
+  }
+
+  if (!d.address) {
+    return 'Enter the verified court mailing address.';
+  }
+
+  if (!d.defendant) {
+    return "Enter the defendant's full name.";
+  }
+
+  if (
+    d.letterType === 'traffic' &&
+    d.tickets.length === 0
+  ) {
+    return 'Enter at least one UTT number.';
+  }
+
+  return '';
+}
+
+function ticketCaption(tickets) {
+  if (tickets.length === 0) return '';
+
+  return tickets.length === 1
+    ? `UTT NO.: ${tickets[0]}`
+    : `UTT NOS.: ${tickets.join(', ')}`;
+}
+
+/* Letter previews */
+
+function representationPreview(d) {
   return `${dateText(d.date)}
 
 Clerk, ${d.court}
@@ -162,13 +254,46 @@ cc: ${titleCase(d.county)} County District Attorney’s Office
     ${d.defendant}`;
 }
 
+function trafficPreview(d) {
+  return `${dateText(d.date)}
+
+Clerk, ${d.court}
+${d.address}
+
+PEOPLE V. ${d.defendant.toUpperCase()}
+${ticketCaption(d.tickets)}
+
+Dear Clerk:
+
+Please be advised that this firm has been retained to represent ${d.defendant} with regard to the above referenced matter.
+
+Please enter a plea of “not guilty” on behalf of ${d.defendant} and schedule this matter for a pre-trial conference.
+
+Finally, kindly provide my office with information on how to handle this matter by mail, if appropriate.
+
+Very truly yours,
+
+LAW OFFICE OF JAMES E. TYNER, PLLC
+
+By: _______________________________
+    James E. Tyner
+
+JET/aed`;
+}
+
+function preview(d) {
+  return d.letterType === 'traffic'
+    ? trafficPreview(d)
+    : representationPreview(d);
+}
+
 function getData() {
   const d = data();
-  const err = validate(d);
+  const error = validate(d);
 
-  $('status').textContent = err;
+  $('status').textContent = error;
 
-  return err ? null : d;
+  return error ? null : d;
 }
 
 function doPreview() {
@@ -179,12 +304,17 @@ function doPreview() {
   $('preview').textContent = preview(d);
 
   $('status').textContent =
-    'Preview is plain text. The Word template controls Small Caps formatting.';
+    'Preview is plain text. The Word template controls formatting.';
 }
 
-/* Preserve working sequential Word replacements */
+/* Word template replacements */
 
-async function replaceAll(context, marker, value, required = true) {
+async function replaceAll(
+  context,
+  marker,
+  value,
+  required = true
+) {
   let count = 0;
 
   while (count < 30) {
@@ -199,7 +329,7 @@ async function replaceAll(context, marker, value, required = true) {
     if (matches.items.length === 0) break;
 
     matches.items[0].insertText(
-      value,
+      String(value),
       Word.InsertLocation.replace
     );
 
@@ -208,17 +338,21 @@ async function replaceAll(context, marker, value, required = true) {
   }
 
   if (count === 0 && required) {
-    throw new Error(`Template field not found: ${marker}`);
+    throw new Error(
+      `Template field not found: ${marker}`
+    );
   }
 
   if (count === 30) {
-    throw new Error(`Too many replacements for ${marker}`);
+    throw new Error(
+      `Too many replacements for ${marker}`
+    );
   }
 
   return count;
 }
 
-/* Fill the Word letter */
+/* Generate the selected Word letter */
 
 async function fillLetter() {
   const d = getData();
@@ -232,48 +366,123 @@ async function fillLetter() {
     await Word.run(async context => {
       const lines = d.address
         .split(/\r?\n/)
-        .map(s => s.trim())
+        .map(line => line.trim())
         .filter(Boolean);
 
       const fields = [
         ['{{LETTER_DATE}}', dateText(d.date), true],
         ['{{COURT_NAME}}', d.court, true],
         ['{{COURT_STREET}}', lines[0] || '', true],
-        ['{{COURT_CITY_STATE_ZIP}}', lines.slice(1).join(', '), true],
+        [
+          '{{COURT_CITY_STATE_ZIP}}',
+          lines.slice(1).join(', '),
+          true
+        ],
         ['{{DEFENDANT_CAPTION}}', d.defendant, true],
-        ['{{DEFENDANT_NAME}}', d.defendant, true],
-        ['{{COUNTY}}', titleCase(d.county), true]
+        ['{{DEFENDANT_NAME}}', d.defendant, true]
       ];
+
+      if (d.letterType === 'representation') {
+        fields.push([
+          '{{COUNTY}}',
+          titleCase(d.county),
+          true
+        ]);
+      } else {
+        fields.push([
+          '{{UTT_LABEL}}',
+          d.tickets.length === 1
+            ? 'UTT NO.'
+            : 'UTT NOS.',
+          true
+        ]);
+
+        fields.push([
+          '{{UTT_NUMBERS}}',
+          d.tickets.join(', '),
+          true
+        ]);
+      }
 
       for (const [marker, value, required] of fields) {
         field = marker;
-        await replaceAll(context, marker, value, required);
+
+        await replaceAll(
+          context,
+          marker,
+          value,
+          required
+        );
       }
     });
 
     $('status').textContent =
-      'Letter filled. Review the court mailing address and Small Caps caption, then use File > Save As in Word.';
+      'Letter filled successfully. Review the court mailing address and letter formatting, then use File > Save As in Word.';
 
-  } catch (e) {
+  } catch (error) {
     $('status').textContent =
       `Unable to fill letter while processing ${field}: ` +
-      `${e.message || String(e)} (${e.code || 'no error code'}). ` +
-      'Open a fresh copy of the template before retrying.';
+      `${error.message || String(error)} ` +
+      `(${error.code || 'no error code'}). ` +
+      'Open a fresh copy of the correct template before retrying.';
 
-    console.error('Word letter fill error', field, e);
+    console.error(
+      'Word letter fill error',
+      field,
+      error
+    );
   }
 }
 
 /* Initialize */
 
-$('date').value = new Date().toLocaleDateString('en-CA');
+function initialize() {
+  const today = new Date();
 
-$('county').addEventListener('change', populateCourts);
-$('courtSelect').addEventListener('change', selectCourt);
-$('previewButton').addEventListener('click', doPreview);
-$('generateButton').addEventListener('click', fillLetter);
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
 
-Office.onReady(() => {
-  $('status').textContent =
-    'Open a fresh copy of your representation letter template in Word.';
-});
+  $('date').value = `${yyyy}-${mm}-${dd}`;
+
+  $('courtSearch').addEventListener(
+    'input',
+    () => {
+      clearCourtSelection();
+      searchCourts();
+    }
+  );
+
+  $('letterType').addEventListener(
+    'change',
+    updateLetterType
+  );
+
+  $('addTicketButton').addEventListener(
+    'click',
+    () => addTicket()
+  );
+
+  $('previewButton').addEventListener(
+    'click',
+    doPreview
+  );
+
+  $('generateButton').addEventListener(
+    'click',
+    fillLetter
+  );
+
+  addTicket();
+  updateLetterType();
+
+  if (typeof COURT_DIRECTORY === 'undefined') {
+    $('status').textContent =
+      'WARNING: Court directory did not load. Check courts.js.';
+  } else {
+    $('status').textContent =
+      'Open a fresh copy of the appropriate letter template in Word.';
+  }
+}
+
+Office.onReady(initialize);
