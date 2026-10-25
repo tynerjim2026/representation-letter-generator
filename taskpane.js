@@ -220,12 +220,12 @@ function validate(d) {
   return '';
 }
 
+/* UTT heading — always singular */
+
 function ticketCaption(tickets) {
   if (tickets.length === 0) return '';
 
-  return tickets.length === 1
-    ? `UTT NO.: ${tickets[0]}`
-    : `UTT NOS.: ${tickets.join(', ')}`;
+  return `UTT No. ${tickets.join(', ')}`;
 }
 
 /* Letter previews */
@@ -260,8 +260,8 @@ function trafficPreview(d) {
 Clerk, ${d.court}
 ${d.address}
 
-PEOPLE V. ${d.defendant.toUpperCase()}
-${ticketCaption(d.tickets)}
+    PEOPLE V. ${d.defendant.toUpperCase()}
+    ${ticketCaption(d.tickets)}
 
 Dear Clerk:
 
@@ -391,9 +391,7 @@ async function fillLetter() {
       } else {
         fields.push([
           '{{UTT_LABEL}}',
-          d.tickets.length === 1
-            ? 'UTT NO.'
-            : 'UTT NOS.',
+          'UTT No.',
           true
         ]);
 
