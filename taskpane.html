@@ -3,9 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Representation Letter Generator</title>
 
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
@@ -18,16 +16,8 @@
       color: #202833;
     }
 
-    h2 {
-      font-size: 19px;
-      margin-bottom: 6px;
-    }
-
-    h3 {
-      font-size: 15px;
-      margin-top: 22px;
-      margin-bottom: 8px;
-    }
+    h2 { font-size: 19px; margin-bottom: 6px; }
+    h3 { font-size: 15px; margin: 22px 0 8px; }
 
     label {
       display: block;
@@ -35,7 +25,7 @@
       font-weight: 600;
     }
 
-    input, textarea, select {
+    input, textarea {
       box-sizing: border-box;
       width: 100%;
       padding: 9px;
@@ -45,10 +35,7 @@
       background: white;
     }
 
-    textarea {
-      min-height: 75px;
-      resize: vertical;
-    }
+    textarea { min-height: 75px; resize: vertical; }
 
     button {
       margin: 12px 6px 0 0;
@@ -68,6 +55,7 @@
     button.removeTicket {
       background: #b42318;
       padding: 8px 10px;
+      margin: 0 0 0 6px;
     }
 
     .note {
@@ -76,17 +64,8 @@
       line-height: 1.5;
     }
 
-    .ticketRow {
-      margin-bottom: 8px;
-    }
-
-    .ticketRow input {
-      width: calc(100% - 90px);
-    }
-
-    .ticketRow button {
-      margin: 0 0 0 6px;
-    }
+    .ticketRow { margin-bottom: 8px; }
+    .ticketRow input { width: calc(100% - 90px); }
 
     #courtMatches {
       border: 1px solid #d7dce4;
@@ -109,15 +88,21 @@
       color: #202833;
     }
 
-    #courtMatches button:hover {
-      background: #eef4ff;
-    }
+    #courtMatches button:hover { background: #eef4ff; }
 
     #trafficFields {
       display: none;
       border-top: 1px solid #d7dce4;
       margin-top: 18px;
       padding-top: 4px;
+    }
+
+    #detectedType {
+      font-weight: 600;
+      padding: 10px;
+      background: #f0f4fa;
+      border-radius: 5px;
+      margin-top: 12px;
     }
 
     #status {
@@ -139,22 +124,21 @@
 
 <body>
 
-  <h2>Representation Letter Generator</h2>
+  <h2>Letter Generator</h2>
 
   <p class="note">
-    Search for a court, confirm its mailing address,
-    and choose the letter you want to generate.
+    Open your Word letter template.
+    The questionnaire will recognize the letter type.
   </p>
 
-  <label for="letterType">Letter type</label>
-  <select id="letterType">
-    <option value="representation">
-      Representation Letter
-    </option>
-    <option value="traffic">
-      Traffic Representation Letter
-    </option>
-  </select>
+  <div id="detectedType">
+    Checking open Word document...
+  </div>
+
+  <button type="button" class="secondary"
+          id="detectButton">
+    Check Open Document
+  </button>
 
   <label for="date">Letter date</label>
   <input id="date" type="date">
@@ -162,96 +146,72 @@
   <h3>Court Information</h3>
 
   <label for="courtSearch">Search for court</label>
-  <input
-    id="courtSearch"
-    type="text"
-    autocomplete="off"
-    placeholder="Start typing a court name">
+  <input id="courtSearch"
+         type="text"
+         autocomplete="off"
+         placeholder="Start typing a court name">
 
   <div id="courtMatches"></div>
 
   <p class="note">
-    Select a matching court to fill in its county
-    and listed address automatically.
+    Select a matching court to automatically fill
+    its county and listed address.
   </p>
 
   <label for="court">Court name</label>
-  <input
-    id="court"
-    placeholder="Court name"
-  >
+  <input id="court" placeholder="Court name">
 
   <label for="county">County</label>
-  <input
-    id="county"
-    placeholder="Automatically filled or enter manually"
-  >
+  <input id="county"
+         placeholder="Automatically filled or enter manually">
 
   <label for="address">Court mailing address</label>
-  <textarea
-    id="address"
-    placeholder="Street or P.O. Box&#10;City, New York ZIP"
-  ></textarea>
+  <textarea id="address"
+    placeholder="Street or P.O. Box&#10;City, New York ZIP"></textarea>
 
   <p id="addressNote" class="note">
-    Select a court and confirm its mailing address.
+    Confirm the court mailing address before use.
   </p>
 
   <h3>Defendant Information</h3>
 
   <label for="defendant">Defendant's full name</label>
-  <input
-    id="defendant"
-    placeholder="John Smith"
-  >
+  <input id="defendant" placeholder="John Smith">
 
   <div id="trafficFields">
-
     <h3>Uniform Traffic Tickets</h3>
 
     <p class="note">
       Enter one or more UTT numbers.
-      They will appear on one line in the letter.
+      They will appear on one line.
     </p>
 
     <div id="ticketList"></div>
 
-    <button
-      type="button"
-      class="secondary"
-      id="addTicketButton">
+    <button type="button"
+            class="secondary"
+            id="addTicketButton">
       + Add Another Ticket
     </button>
-
   </div>
 
   <h3>Generate Letter</h3>
 
-  <p id="templateNote" class="note">
-    Open a fresh copy of your Representation Letter
-    template in Word before filling it.
-  </p>
-
-  <button
-    type="button"
-    class="secondary"
-    id="previewButton">
+  <button type="button"
+          class="secondary"
+          id="previewButton">
     Preview Letter
   </button>
 
-  <button
-    type="button"
-    id="generateButton">
+  <button type="button" id="generateButton">
     Fill Word Letter
   </button>
 
   <div id="preview"></div>
-
   <div id="status" role="status"></div>
 
-  <!-- Load court directory before questionnaire logic -->
   <script src="courts.js?v=9"></script>
-  <script src="taskpane.js?v=10"></script>
+  <script src="taskpane.js?v=11"></script>
 
 </body>
 </html>
